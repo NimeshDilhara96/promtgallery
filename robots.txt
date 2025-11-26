@@ -1,0 +1,31 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /models/
+Disallow: /includes/
+
+# Disallow search and filter pages (prevent duplicate content)
+Disallow: /*?search=*
+Disallow: /*?page=*
+Disallow: /*&page=*
+
+# Allow specific important pages
+Allow: /about.php
+Allow: /instructions.php
+Allow: /contact.php
+Allow: /prompt.php*
+
+# Sitemap
+Sitemap: https://mometec.codes/sitemap.php
+
+# Crawl-delay for being nice to the server
+Crawl-delay: 1
+
+# Block common bad bots (optional)
+User-agent: MJ12bot
+User-agent: AhrefsBot
+User-agent: SemrushBot
+Disallow: /
