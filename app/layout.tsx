@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   authors: [{ name: "AI Prompt Gallery" }],
   creator: "AI Prompt Gallery",
   publisher: "AI Prompt Gallery",
+  verification: {
+    google: "MPKtElHbSG4pCpKJqhAXIDSqeu1FfaagHWVTPWr4daM",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
