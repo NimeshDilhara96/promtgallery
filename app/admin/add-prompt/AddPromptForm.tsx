@@ -121,6 +121,7 @@ export function AddPromptForm({ existingCategories }: { existingCategories: stri
           <option value="All Platforms">All Platforms</option>
           <option value="Midjourney">Midjourney</option>
           <option value="DALL-E">DALL-E</option>
+          <option value="ChatGPT">ChatGPT</option>
           <option value="Stable Diffusion">Stable Diffusion</option>
           <option value="Leonardo AI">Leonardo AI</option>
           <option value="Gemini">Gemini</option>
