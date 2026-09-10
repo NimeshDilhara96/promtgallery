@@ -7,7 +7,7 @@ class Prompt {
     private $collection;
 
     public function __construct() {
-        require_once('/var/www/secure_config/database.php');
+        require_once __DIR__ . '/../config/database.php';
 
         $dbInstance = Database::getInstance();
         $this->client = $dbInstance->getClient(); // MongoDB\Driver\Manager
@@ -139,7 +139,11 @@ class Prompt {
             $insertedId = $bulk->insert($document);
             
             $writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
-            $result = $this->client->executeBulkWrite($this->dbName . '.' . $this->collection, $bulk, $writeConcern);
+            $result = $this->client->executeBulkWrite(
+                $this->dbName . '.' . $this->collection,
+                $bulk,
+                ['writeConcern' => $writeConcern]
+            );
             
             error_log("Insert result - Inserted count: " . $result->getInsertedCount());
             
@@ -169,7 +173,11 @@ class Prompt {
             $bulk->update($filter, $update, ['multi' => false, 'upsert' => false]);
             
             $writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
-            $result = $this->client->executeBulkWrite($this->dbName . '.' . $this->collection, $bulk, $writeConcern);
+            $result = $this->client->executeBulkWrite(
+                $this->dbName . '.' . $this->collection,
+                $bulk,
+                ['writeConcern' => $writeConcern]
+            );
             
             return $result->getModifiedCount() > 0 || $result->getMatchedCount() > 0;
         } catch (Exception $e) {
@@ -185,7 +193,11 @@ class Prompt {
             $bulk->delete(['_id' => new MongoDB\BSON\ObjectId($id)], ['limit' => 1]);
             
             $writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
-            $result = $this->client->executeBulkWrite($this->dbName . '.' . $this->collection, $bulk, $writeConcern);
+            $result = $this->client->executeBulkWrite(
+                $this->dbName . '.' . $this->collection,
+                $bulk,
+                ['writeConcern' => $writeConcern]
+            );
             
             return $result->getDeletedCount() > 0;
         } catch (Exception $e) {

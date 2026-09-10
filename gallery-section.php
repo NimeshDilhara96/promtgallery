@@ -634,16 +634,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Ad Script hiltop-video if remove -->
-<script>
-(function(mpwwn){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = mpwwn || {};
-s.src = "\/\/livid-factor.com\/bLXQVos.dKGBl\/0qYNWCcn\/Weymw9budZTU\/lHkcPqTdYa2mOiT\/E-4JMoDQkHt\/NQjXYK5OM\/TsgrxsMBAR";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>

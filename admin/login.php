@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter both username and password.';
     } else {
         // Connect to MongoDB
-        require_once('/var/www/secure_config/database.php');
+        require_once __DIR__ . '/../config/database.php';
         
         try {
             // Find admin by username using MongoDB\Driver\Manager
