@@ -19,7 +19,7 @@ Allow: /contact.php
 Allow: /prompt.php*
 
 # Sitemap
-Sitemap: https://mometec.codes/sitemap.php
+Sitemap: https://aiprompts.mommentx.space/sitemap.xml
 
 # Crawl-delay for being nice to the server
 Crawl-delay: 1

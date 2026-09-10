@@ -3,7 +3,7 @@ import dbConnect from "@/lib/db";
 import { Prompt } from "@/lib/models";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseURL = process.env.NEXT_PUBLIC_SITE_URL || "https://aipromptgallery.com";
+  const baseURL = process.env.NEXT_PUBLIC_SITE_URL || "https://aiprompts.mommentx.space";
   
   await dbConnect();
   const prompts = await Prompt.find({}, { slug: 1, updated_at: 1, created_at: 1 }).lean();

@@ -3,7 +3,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 
 import { Metadata } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aipromptgallery.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aiprompts.mommentx.space";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
