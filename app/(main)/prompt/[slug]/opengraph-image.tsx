@@ -73,7 +73,6 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            zIndex: 10,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
