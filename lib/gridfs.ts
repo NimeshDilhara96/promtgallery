@@ -1,33 +1,37 @@
 import mongoose from "mongoose";
 import { GridFSBucket } from "mongodb";
+import dbConnect from "./db";
 
-let bucket: GridFSBucket | null = null;
-
-export function getGridFSBucket(): GridFSBucket {
-  if (bucket) return bucket;
+export async function getGridFSBucket(): Promise<GridFSBucket> {
+  await dbConnect();
   const db = mongoose.connection.db;
   if (!db) {
-    throw new Error("Database not connected");
+    throw new Error("Database connection is not ready");
   }
-  bucket = new mongoose.mongo.GridFSBucket(db, {
+  return new mongoose.mongo.GridFSBucket(db, {
     bucketName: "images",
   });
-  return bucket;
 }
 
 export async function uploadImage(file: File): Promise<string> {
-  const bucket = getGridFSBucket();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+  await dbConnect();
+  const bucket = await getGridFSBucket();
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const cleanName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, "_") : "image.jpg";
+  const filename = `${Date.now()}-${cleanName}`;
   
   return new Promise((resolve, reject) => {
     const uploadStream = bucket.openUploadStream(filename, {
-      contentType: file.type,
+      contentType: file.type || "image/jpeg",
     } as any);
     
-    uploadStream.on("error", (error) => reject(error));
+    uploadStream.on("error", (error) => {
+      console.error("GridFS upload error:", error);
+      reject(error);
+    });
+    
     uploadStream.on("finish", () => {
-      // The API endpoint will serve this via /api/image/[filename]
       resolve(`api/image/${filename}`);
     });
     

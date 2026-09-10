@@ -2,16 +2,30 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { addPromptAction } from "./actions";
 
 export function AddPromptForm({ existingCategories }: { existingCategories: string[] }) {
+  const router = useRouter();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
   const handleSubmit = async (formData: FormData) => {
-    const res = await addPromptAction(formData);
-    if (res?.error) {
-      setError(res.error);
+    setError("");
+    setLoading(true);
+    try {
+      const res = await addPromptAction(formData);
+      if (res?.error) {
+        setError(res.error);
+        setLoading(false);
+      } else if (res?.success) {
+        router.push("/admin/dashboard");
+        router.refresh();
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setLoading(false);
     }
   };
 
@@ -159,8 +173,17 @@ export function AddPromptForm({ existingCategories }: { existingCategories: stri
       </div>
 
       <div className="d-flex gap-2">
-        <button type="submit" className="btn btn-primary px-4">
-          <i className="bi bi-plus-circle me-2"></i>Add Prompt
+        <button type="submit" className="btn btn-primary px-4" disabled={loading}>
+          {loading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Saving...
+            </>
+          ) : (
+            <>
+              <i className="bi bi-plus-circle me-2"></i>Add Prompt
+            </>
+          )}
         </button>
         <Link href="/admin/dashboard" className="btn btn-outline-secondary">
           Cancel

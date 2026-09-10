@@ -7,7 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
   try {
     const { filename } = await params;
     await dbConnect();
-    const bucket = getGridFSBucket();
+    const bucket = await getGridFSBucket();
     
     const files = await bucket.find({ filename }).toArray();
     
@@ -18,12 +18,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     const file = files[0];
     const downloadStream = bucket.openDownloadStreamByName(filename);
     
-    // We can convert the Node.js Readable to a Web ReadableStream
+    // Convert Node.js Readable stream to Web ReadableStream
     const webStream = new ReadableStream({
       start(controller) {
-        downloadStream.on("data", (chunk) => controller.enqueue(chunk));
+        downloadStream.on("data", (chunk: Buffer) => controller.enqueue(chunk));
         downloadStream.on("end", () => controller.close());
-        downloadStream.on("error", (err) => controller.error(err));
+        downloadStream.on("error", (err: Error) => controller.error(err));
       },
     });
     
