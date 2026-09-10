@@ -55,7 +55,6 @@ export default function Image() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            zIndex: 10,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -103,7 +102,7 @@ export default function Image() {
         </div>
 
         {/* Center Main Message */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", zIndex: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <h1
             style={{
               fontSize: "58px",
@@ -141,7 +140,6 @@ export default function Image() {
             justifyContent: "space-between",
             borderTop: "1px solid rgba(255, 255, 255, 0.12)",
             paddingTop: "24px",
-            zIndex: 10,
           }}
         >
           <div style={{ display: "flex", gap: "12px" }}>

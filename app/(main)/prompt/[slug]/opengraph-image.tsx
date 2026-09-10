@@ -136,7 +136,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
 
         {/* Content Body */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px", zIndex: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <h1
             style={{
               fontSize: "52px",
@@ -177,7 +177,6 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             justifyContent: "space-between",
             borderTop: "1px solid rgba(255, 255, 255, 0.12)",
             paddingTop: "20px",
-            zIndex: 10,
           }}
         >
           <span style={{ fontSize: "18px", color: "#94a3b8", fontWeight: "500" }}>
