@@ -19,7 +19,6 @@ export default async function proxy(request: NextRequest) {
     }
 
     if (!session) {
-      // If it is a Server Action POST request, return 401 instead of redirecting
       if (request.method === "POST") {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
@@ -27,7 +26,26 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  return (await updateSession(request)) || NextResponse.next();
+  // Fix Cloudflare proxy CSRF: ensure x-forwarded-host matches the Origin
+  const requestHeaders = new Headers(request.headers);
+  const origin = request.headers.get("origin");
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host;
+      requestHeaders.set("x-forwarded-host", originHost);
+    } catch {}
+  }
+
+  const sessionResponse = await updateSession(request);
+  if (sessionResponse) {
+    return sessionResponse;
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {
