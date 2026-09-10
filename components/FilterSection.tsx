@@ -33,6 +33,8 @@ export function FilterSection({
                 <input
                   type="text"
                   name="search"
+                  id="search-input"
+                  aria-label="Search prompts by keyword, category, or style"
                   className="form-control border-start-0 ps-0"
                   placeholder="Search by keyword, category, or style..."
                   defaultValue={currentSearch}
@@ -41,12 +43,13 @@ export function FilterSection({
                   <Link
                     href={`/?category=${currentCategory}&sort=${currentSort}`}
                     className="input-group-text bg-white text-danger border-start-0 text-decoration-none"
+                    aria-label="Clear search query"
                     title="Clear search"
                   >
                     <i className="bi bi-x-circle-fill"></i>
                   </Link>
                 )}
-                <button type="submit" className="btn btn-primary px-4">
+                <button type="submit" className="btn btn-primary px-4" aria-label="Search prompts">
                   <span className="d-none d-sm-inline">Search</span>
                   <span className="d-inline d-sm-none">Go</span>
                 </button>

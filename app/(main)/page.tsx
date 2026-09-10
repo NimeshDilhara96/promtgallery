@@ -205,7 +205,7 @@ export default async function Home(props: {
               {search && ` matching "${search}"`}
             </h2>
             <div className="d-flex align-items-center gap-2">
-              <span className="text-muted small">Sort by:</span>
+              <label htmlFor="sort-select" className="text-muted small mb-0">Sort by:</label>
               <SortSelect
                 currentCategory={category}
                 currentSearch={search}

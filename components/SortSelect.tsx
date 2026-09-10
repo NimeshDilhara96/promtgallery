@@ -15,7 +15,9 @@ export function SortSelect({
 
   return (
     <select
+      id="sort-select"
       name="sort"
+      aria-label="Sort prompts by"
       className="form-select form-select-sm d-inline-block w-auto"
       defaultValue={currentSort}
       onChange={(e) => {
