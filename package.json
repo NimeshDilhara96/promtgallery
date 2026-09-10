@@ -1,0 +1,44 @@
+{
+  "name": "promtgallery",
+  "version": "1.0.0",
+  "description": "A web application for managing and displaying prompts.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NimeshDilhara96/promtgallery.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NimeshDilhara96/promtgallery/issues"
+  },
+  "homepage": "https://github.com/NimeshDilhara96/promtgallery#readme",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "bcryptjs": "^3.0.3",
+    "bootstrap-icons": "^1.13.1",
+    "jose": "^6.2.12",
+    "mongoose": "^9.9.5",
+    "next": "^16.3.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.20.2",
+    "@types/react": "^19.3.0",
+    "autoprefixer": "^10.5.5",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.4",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
+  }
+}
