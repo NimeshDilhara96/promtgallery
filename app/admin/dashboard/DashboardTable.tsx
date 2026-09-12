@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { deletePrompt } from "./actions";
 
@@ -8,6 +8,11 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
   const [prompts, setPrompts] = useState(initialPrompts);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [promptToDelete, setPromptToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [now, setNow] = useState<number>(0);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
 
   const confirmDelete = (id: string, title: string) => {
     setPromptToDelete({ id, title });
@@ -22,8 +27,6 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
       setPromptToDelete(null);
     }
   };
-
-  const now = Date.now();
 
   return (
     <>
