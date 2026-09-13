@@ -237,6 +237,9 @@ export default async function Home(props: {
                       prompt: p.prompt,
                       image: p.image,
                       stats: p.stats,
+                      platform: p.platform,
+                      category: p.category,
+                      tags: p.tags,
                     }}
                   />
                 </div>
