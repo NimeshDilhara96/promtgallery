@@ -5,11 +5,37 @@ import Link from "next/link";
 import { PromptCard } from "@/components/PromptCard";
 import AdBanner from "@/components/AdBanner";
 
-export function PromptDetailClient({ prompt, relatedPrompts }: { prompt: any; relatedPrompts: any[] }) {
+export function PromptDetailClient({
+  prompt,
+  relatedPrompts,
+}: {
+  prompt: any;
+  relatedPrompts: any[];
+}) {
   const [copied, setCopied] = useState(false);
-  const [views, setViews] = useState(prompt.stats?.views || 0);
-  const [copies, setCopies] = useState(prompt.stats?.copies || 0);
   const [showModal, setShowModal] = useState(false);
+  const [copies, setCopies] = useState(prompt.stats?.copies || 0);
+  const [views, setViews] = useState(prompt.stats?.views || 0);
+
+  const getPlatformLink = (platform: string, promptText: string) => {
+    if (!platform) return null;
+    const p = platform.toLowerCase();
+    const encodedPrompt = encodeURIComponent(promptText);
+    if (p.includes("chatgpt")) {
+      return { name: "ChatGPT", url: `https://chatgpt.com/?q=${encodedPrompt}`, icon: "bi-robot" };
+    } else if (p.includes("midjourney")) {
+      return { name: "Midjourney", url: "https://discord.com/channels/@me", icon: "bi-discord" };
+    } else if (p.includes("dall-e") || p.includes("dalle") || p.includes("dall e")) {
+      return { name: "ChatGPT (DALL-E)", url: `https://chatgpt.com/?q=${encodedPrompt}`, icon: "bi-stars" };
+    } else if (p.includes("leonardo")) {
+      return { name: "Leonardo AI", url: "https://app.leonardo.ai/", icon: "bi-palette" };
+    } else if (p.includes("gemini")) {
+      return { name: "Gemini", url: "https://gemini.google.com/app", icon: "bi-google" };
+    }
+    return null;
+  };
+
+  const platformLink = getPlatformLink(prompt.platform, prompt.prompt);
 
   useEffect(() => {
     // Track view
@@ -300,22 +326,35 @@ export function PromptDetailClient({ prompt, relatedPrompts }: { prompt: any; re
                   )}
 
                   <div className="d-none d-md-flex gap-2 flex-wrap justify-content-between align-items-center">
-                    <button
-                      className={`btn btn-lg px-4 px-md-5 ${
-                        copied ? "btn-success" : "btn-primary"
-                      }`}
-                      onClick={handleCopy}
-                    >
-                      {copied ? (
-                        <>
-                          <i className="bi bi-check-lg me-2"></i> Copied!
-                        </>
-                      ) : (
-                        <>
-                          <i className="bi bi-clipboard me-2"></i> Copy Prompt
-                        </>
+                    <div className="d-flex gap-2 flex-wrap">
+                      <button
+                        className={`btn btn-lg px-4 ${
+                          copied ? "btn-success" : "btn-primary"
+                        }`}
+                        onClick={handleCopy}
+                      >
+                        {copied ? (
+                          <>
+                            <i className="bi bi-check-lg me-2"></i> Copied!
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-clipboard me-2"></i> Copy Prompt
+                          </>
+                        )}
+                      </button>
+                      {platformLink && (
+                        <a
+                          href={platformLink.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline-primary btn-lg px-4"
+                        >
+                          <i className={`bi ${platformLink.icon} me-2`}></i>
+                          Open in {platformLink.name}
+                        </a>
                       )}
-                    </button>
+                    </div>
                     <div className="d-flex gap-2">
                       <button
                         className="btn btn-outline-secondary"
@@ -375,8 +414,23 @@ export function PromptDetailClient({ prompt, relatedPrompts }: { prompt: any; re
         </div>
       </section>
 
-      <div className="mobile-action-bar d-md-none position-fixed bottom-0 start-0 end-0 bg-white p-3 shadow-lg border-top" style={{ zIndex: 1000 }}>
+      {/* Mobile Fixed Bottom Bar */}
+      <div
+        className="d-md-none position-fixed bottom-0 start-0 w-100 bg-white border-top shadow-lg p-2"
+        style={{ zIndex: 1000 }}
+      >
         <div className="d-flex gap-2">
+          {platformLink && (
+            <a
+              href={platformLink.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-primary"
+              title={`Open in ${platformLink.name}`}
+            >
+              <i className={`bi ${platformLink.icon}`}></i>
+            </a>
+          )}
           <button
             className={`btn flex-grow-1 ${
               copied ? "btn-success" : "btn-primary"
