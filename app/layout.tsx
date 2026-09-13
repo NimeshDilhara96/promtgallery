@@ -8,13 +8,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aiprompts.mommentx.
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "AI Prompt Gallery - High Quality Midjourney, DALL-E & Stable Diffusion Prompts",
+    default: "AI Prompts Gallery - ChatGPT, Gemini, Midjourney & More",
     template: "%s | AI Prompt Gallery",
   },
-  description: "Discover, copy, and create stunning AI art with our curated collection of free prompts for Midjourney, DALL-E 3, Stable Diffusion, and Leonardo AI.",
+  description: "Discover, copy, and explore powerful AI prompts for ChatGPT, Gemini, Midjourney, Claude, and more. Find prompts for writing, coding, image generation, marketing, productivity, and creativity.",
   keywords: [
     "AI Prompts",
     "Midjourney Prompts",
+    "ChatGPT Prompts",
     "DALL-E 3 Prompts",
     "Stable Diffusion Prompts",
     "AI Art Generator",
@@ -91,6 +92,8 @@ export const metadata: Metadata = {
   },
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: {
@@ -110,6 +113,12 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        
+        {/* Adsterra Social Bar / Popunder Script */}
+        <Script
+          src="https://pl31319348.profitableratecpmnetwork.com/f0/5a/82/f05a82cdd0e4effadb458e5fb727fffb.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
