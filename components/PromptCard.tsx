@@ -1,39 +1,10 @@
 "use client";
 
-import { useState } from "react";
+
 import Link from "next/link";
 import Image from "next/image";
 
 export function PromptCard({ prompt }: { prompt: any }) {
-  const [copied, setCopied] = useState(false);
-  const [copies, setCopies] = useState(prompt.stats?.copies || 0);
-  const [views, setViews] = useState(prompt.stats?.views || 0);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(prompt.prompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-
-      const storageKey = `prompt_copy_${prompt._id}`;
-      if (!localStorage.getItem(storageKey)) {
-        localStorage.setItem(storageKey, Date.now().toString());
-        const res = await fetch(`/api/track`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: prompt._id, type: "copy" }),
-        });
-        const data = await res.json();
-        if (data.success && data.stats) {
-          setCopies(data.stats.copies);
-          setViews(data.stats.views);
-        }
-      }
-    } catch (err) {
-      console.error("Copy failed", err);
-    }
-  };
-
   const promptUrl = `/prompt/${prompt.slug}`;
 
   const promptCategories = Array.isArray(prompt.category)
@@ -156,37 +127,22 @@ export function PromptCard({ prompt }: { prompt: any }) {
                 title="Views"
               >
                 <i className="bi bi-eye-fill me-1"></i>
-                {views}
+                {prompt.stats?.views || 0}
               </span>
               <span
                 className="badge bg-success rounded-pill copies-count"
                 title="Copies"
               >
                 <i className="bi bi-clipboard-check me-1"></i>
-                {copies}
+                {prompt.stats?.copies || 0}
               </span>
             </div>
           </div>
 
-          <div className="d-grid gap-2">
-            <button
-              className={`btn btn-sm ${copied ? "btn-success" : "btn-primary"}`}
-              onClick={handleCopy}
-              title="Copy prompt to clipboard"
-            >
-              {copied ? (
-                <>
-                  <i className="bi bi-check-lg me-2"></i>Copied!
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-clipboard me-2"></i>Copy Prompt
-                </>
-              )}
-            </button>
+          <div className="d-grid gap-2 mt-3">
             <Link
               href={promptUrl}
-              className="btn btn-outline-primary btn-sm w-100"
+              className="btn btn-primary btn-sm w-100"
               title="View full prompt details"
             >
               <i className="bi bi-eye me-2"></i>View Details
