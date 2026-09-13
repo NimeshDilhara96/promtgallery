@@ -126,7 +126,7 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
                           </span>
                         </td>
                         <td>
-                          <small className="text-muted">
+                          <small className="text-muted" suppressHydrationWarning>
                             {prompt.created_at ? (
                               <>
                                 {new Date(prompt.created_at).toLocaleDateString()}
