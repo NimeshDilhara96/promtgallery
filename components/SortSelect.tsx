@@ -23,7 +23,7 @@ export function SortSelect({
       onChange={(e) => {
         let url = `/?category=${currentCategory}&sort=${e.target.value}`;
         if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
-        router.push(url);
+        router.push(url, { scroll: false });
       }}
     >
       <option value="latest">Latest First</option>

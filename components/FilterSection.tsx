@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export function FilterSection({
   categories,
@@ -12,12 +14,15 @@ export function FilterSection({
   currentSearch: string;
   currentSort: string;
 }) {
-  async function searchAction(formData: FormData) {
-    "use server";
+  const router = useRouter();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     const search = formData.get("search") as string;
     let url = `/?category=${currentCategory}&sort=${currentSort}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    redirect(url);
+    router.push(url, { scroll: false });
   }
 
   return (
@@ -25,7 +30,7 @@ export function FilterSection({
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-lg-10">
-            <form action={searchAction} className="search-form mb-4">
+            <form onSubmit={handleSubmit} className="search-form mb-4">
               <div className="input-group input-group-lg shadow-sm">
                 <span className="input-group-text bg-white border-end-0">
                   <i className="bi bi-search text-muted"></i>
@@ -42,6 +47,7 @@ export function FilterSection({
                 {currentSearch && (
                   <Link
                     href={`/?category=${currentCategory}&sort=${currentSort}`}
+                    scroll={false}
                     className="input-group-text bg-white text-danger border-start-0 text-decoration-none"
                     aria-label="Clear search query"
                     title="Clear search"
@@ -66,6 +72,7 @@ export function FilterSection({
                   href={`/?category=all${
                     currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : ""
                   }&sort=${currentSort}`}
+                  scroll={false}
                   className={`btn btn-sm rounded-pill ${
                     currentCategory === "all" ? "btn-primary active" : "btn-outline-primary"
                   }`}
@@ -79,6 +86,7 @@ export function FilterSection({
                       href={`/?category=${encodeURIComponent(cat)}${
                         currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : ""
                       }&sort=${currentSort}`}
+                      scroll={false}
                       className={`btn btn-sm rounded-pill ${
                         currentCategory === cat ? "btn-primary active" : "btn-outline-primary"
                       }`}

@@ -258,6 +258,7 @@ export default async function Home(props: {
                 <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                   <Link
                     href={`/?page=${currentPage - 1}&category=${category}&search=${search}&sort=${sortBy}`}
+                    scroll={false}
                     className="page-link"
                   >
                     Previous
@@ -270,6 +271,7 @@ export default async function Home(props: {
                   >
                     <Link
                       href={`/?page=${i + 1}&category=${category}&search=${search}&sort=${sortBy}`}
+                      scroll={false}
                       className="page-link"
                     >
                       {i + 1}
@@ -281,6 +283,7 @@ export default async function Home(props: {
                 >
                   <Link
                     href={`/?page=${currentPage + 1}&category=${category}&search=${search}&sort=${sortBy}`}
+                    scroll={false}
                     className="page-link"
                   >
                     Next
