@@ -49,11 +49,11 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
                 <tr>
                   <th>Image</th>
                   <th>Title</th>
-                  <th>Category</th>
-                  <th>Platform</th>
-                  <th className="text-center">Views</th>
-                  <th className="text-center">Copies</th>
-                  <th>Created</th>
+                  <th className="d-none d-md-table-cell">Category</th>
+                  <th className="d-none d-lg-table-cell">Platform</th>
+                  <th className="text-center d-none d-sm-table-cell">Views</th>
+                  <th className="text-center d-none d-sm-table-cell">Copies</th>
+                  <th className="d-none d-md-table-cell">Created</th>
                   <th className="text-end">Actions</th>
                 </tr>
               </thead>
@@ -104,28 +104,37 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
                           <small className="text-muted">
                             {prompt.prompt.substring(0, 60)}...
                           </small>
+                          {/* Show badges on mobile that are hidden in columns */}
+                          <div className="d-md-none mt-2">
+                            {categories.slice(0, 2).map((cat: string) => (
+                              <span key={cat} className="badge bg-primary mb-1 me-1" style={{ fontSize: '0.65rem' }}>{cat}</span>
+                            ))}
+                            <span className="badge bg-info mb-1 me-1" style={{ fontSize: '0.65rem' }}>
+                              <i className="bi bi-eye me-1"></i>{prompt.stats?.views || 0}
+                            </span>
+                          </div>
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           {categories.map((cat: string) => (
                             <span key={cat} className="badge bg-primary mb-1 me-1">{cat}</span>
                           ))}
                         </td>
-                        <td>
+                        <td className="d-none d-lg-table-cell">
                           <small className="text-muted">{prompt.platform || "All"}</small>
                         </td>
-                        <td className="text-center">
+                        <td className="text-center d-none d-sm-table-cell">
                           <span className="badge bg-info">
                             <i className="bi bi-eye me-1"></i>
                             {prompt.stats?.views || 0}
                           </span>
                         </td>
-                        <td className="text-center">
+                        <td className="text-center d-none d-sm-table-cell">
                           <span className="badge bg-warning text-dark">
                             <i className="bi bi-clipboard-check me-1"></i>
                             {prompt.stats?.copies || 0}
                           </span>
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           <small className="text-muted" suppressHydrationWarning>
                             {prompt.created_at ? (
                               <>
