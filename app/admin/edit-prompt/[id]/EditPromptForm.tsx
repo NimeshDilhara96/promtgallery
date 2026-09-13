@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { editPromptAction } from "./actions";
+
 
 export function EditPromptForm({ existingCategories, prompt }: { existingCategories: string[], prompt: any }) {
   const router = useRouter();
@@ -12,15 +12,24 @@ export function EditPromptForm({ existingCategories, prompt }: { existingCategor
   const initialImage = prompt.image ? (prompt.image.startsWith("/") ? prompt.image : `/${prompt.image}`) : null;
   const [preview, setPreview] = useState<string | null>(initialImage);
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
+    
     try {
-      const res = await editPromptAction(prompt._id, formData);
-      if (res?.error) {
-        setError(res.error);
+      const formData = new FormData(e.currentTarget);
+      const res = await fetch(`/api/admin/edit-prompt/${prompt._id}`, {
+        method: "POST",
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok || data.error) {
+        setError(data.error || "Something went wrong. Please try again.");
         setLoading(false);
-      } else if (res?.success) {
+      } else if (data.success) {
         router.push("/admin/dashboard");
         router.refresh();
       }
@@ -46,7 +55,7 @@ export function EditPromptForm({ existingCategories, prompt }: { existingCategor
   const promptCategories = Array.isArray(prompt.category) ? prompt.category : [prompt.category];
 
   return (
-    <form action={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       {error && (
         <div className="alert alert-danger alert-dismissible fade show">
           <i className="bi bi-exclamation-triangle me-2"></i>{error}

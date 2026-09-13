@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addPromptAction } from "./actions";
+
 
 export function AddPromptForm({ existingCategories }: { existingCategories: string[] }) {
   const router = useRouter();
@@ -11,15 +11,24 @@ export function AddPromptForm({ existingCategories }: { existingCategories: stri
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
+    
     try {
-      const res = await addPromptAction(formData);
-      if (res?.error) {
-        setError(res.error);
+      const formData = new FormData(e.currentTarget);
+      const res = await fetch("/api/admin/add-prompt", {
+        method: "POST",
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok || data.error) {
+        setError(data.error || "Something went wrong. Please try again.");
         setLoading(false);
-      } else if (res?.success) {
+      } else if (data.success) {
         router.push("/admin/dashboard");
         router.refresh();
       }
@@ -43,7 +52,7 @@ export function AddPromptForm({ existingCategories }: { existingCategories: stri
   };
 
   return (
-    <form action={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       {error && (
         <div className="alert alert-danger alert-dismissible fade show">
           <i className="bi bi-exclamation-triangle me-2"></i>{error}
