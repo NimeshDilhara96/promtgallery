@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import dbConnect from "@/lib/db";
 import { Prompt } from "@/lib/models";
 
@@ -58,10 +59,15 @@ export default async function Footer() {
             </ul>
           </div>
         </div>
-        <div className="border-top border-secondary pt-4 mt-4 text-center">
-          <p className="text-light small mb-0">&copy; 2025 AI Prompt Gallery.</p>
-          <p className="text-light small mb-0">MommentX</p>
-          <p className="text-light small mb-0">All rights reserved.</p>
+        <div className="border-top border-secondary pt-4 mt-4 d-flex flex-column align-items-center text-center">
+          <p className="text-light small mb-3">&copy; {new Date().getFullYear()} AI Prompt Gallery. All rights reserved.</p>
+          <div className="d-flex align-items-center justify-content-center gap-2 text-light small">
+            <span className="me-2">Crafted by</span>
+            <div className="d-flex align-items-center gap-2">
+              <Image src="/logo.png" alt="MommentX Icon" width={24} height={24} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+              <span className="fw-semibold text-light fs-6" style={{ letterSpacing: '0.5px' }}>MommentX</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
