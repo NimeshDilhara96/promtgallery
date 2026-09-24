@@ -8,6 +8,7 @@ import { useState } from "react";
 export function PromptCard({ prompt }: { prompt: any }) {
   const promptUrl = `/prompt/${prompt.slug}`;
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const promptCategories = Array.isArray(prompt.category)
     ? prompt.category
@@ -31,13 +32,13 @@ export function PromptCard({ prompt }: { prompt: any }) {
         style={{ zIndex: 10 }}
         title="Learn how to use this prompt with your photos"
       >
-        <span className="badge bg-info text-white rounded-circle p-2">
+        <span className="badge bg-info text-white rounded-circle p-2 shadow-sm">
           <i className="bi bi-question-circle-fill"></i>
         </span>
       </Link>
 
       <div
-        className="card-img-container"
+        className={`card-img-container ${!imgLoaded && !imgError && imageSrc ? 'placeholder-glow' : ''}`}
         style={{
           position: "relative",
           minHeight: "200px",
@@ -49,6 +50,10 @@ export function PromptCard({ prompt }: { prompt: any }) {
           justifyContent: "center",
         }}
       >
+        {!imgLoaded && !imgError && imageSrc && (
+          <div className="placeholder position-absolute top-0 start-0 w-100 h-100 bg-secondary opacity-25" style={{ zIndex: 1 }}></div>
+        )}
+        
         {imageSrc && !imgError ? (
           <Image
             src={imageSrc}
@@ -57,8 +62,10 @@ export function PromptCard({ prompt }: { prompt: any }) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             style={{
               objectFit: "contain",
-              transition: "transform 0.4s ease",
+              transition: "transform 0.4s ease, opacity 0.5s ease",
+              opacity: imgLoaded ? 1 : 0
             }}
+            onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
           />
         ) : (

@@ -1,11 +1,14 @@
 import dbConnect from "@/lib/db";
 import { Prompt } from "@/lib/models";
 import Link from "next/link";
+import Image from "next/image";
 import { FilterSection } from "@/components/FilterSection";
 import { SortSelect } from "@/components/SortSelect";
 import { PromptCard } from "@/components/PromptCard";
 import AdBanner from "@/components/AdBanner";
 import { unstable_cache } from "next/cache";
+import { Suspense } from "react";
+import HeroAnimation from "@/components/HeroAnimation";
 
 const getCachedCategories = unstable_cache(
   async () => {
@@ -31,6 +34,47 @@ const getCachedTotalPromptsCount = unstable_cache(
   { revalidate: 3600 } // Cache for 1 hour
 );
 
+const getCachedTrendingPrompts = unstable_cache(
+  async () => {
+    await dbConnect();
+    return Prompt.find({}, {
+      _id: 1, title: 1, slug: 1, prompt: 1, image: 1, stats: 1, platform: 1, category: 1, tags: 1, created_at: 1
+    })
+      .sort({ "stats.views": -1 }) // Trending based on views
+      .limit(6)
+      .lean();
+  },
+  ["global-trending-prompts"],
+  { revalidate: 3600 } // Update trending every hour
+);
+
+const getCachedPopularCategories = unstable_cache(
+  async () => {
+    await dbConnect();
+    const popular = await Prompt.aggregate([
+      {
+        $project: {
+          categoryArray: {
+            $cond: {
+              if: { $isArray: "$category" },
+              then: "$category",
+              else: ["$category"]
+            }
+          }
+        }
+      },
+      { $unwind: "$categoryArray" },
+      { $match: { categoryArray: { $nin: [null, ""] } } },
+      { $group: { _id: "$categoryArray", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 }
+    ]);
+    return popular.map((p: any) => ({ name: p._id, count: p.count }));
+  },
+  ["global-popular-categories"],
+  { revalidate: 3600 }
+);
+
 export default async function Home(props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
@@ -49,11 +93,16 @@ export default async function Home(props: {
     filter.category = category;
   }
   if (search) {
-    filter.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { prompt: { $regex: search, $options: "i" } },
-      { tags: { $regex: search, $options: "i" } },
-    ];
+    const words = search.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length > 0) {
+      filter.$and = words.map(word => ({
+        $or: [
+          { title: { $regex: word, $options: "i" } },
+          { category: { $regex: word, $options: "i" } },
+          { tags: { $regex: word, $options: "i" } },
+        ]
+      }));
+    }
   }
 
   // Build sort
@@ -64,11 +113,19 @@ export default async function Home(props: {
     sortOptions = { "stats.copies": -1, created_at: -1 };
   }
 
+  const isDefaultView = category === "all" && !search && page === 1;
+
   // 1. Fetch Global Cached Data (Zero DB hits if cached)
-  const [totalPromptsCount, categories] = await Promise.all([
+  const [totalPromptsCount, categories, trendingPromptsRaw, popularCategories] = await Promise.all([
     getCachedTotalPromptsCount(),
     getCachedCategories(),
+    isDefaultView ? getCachedTrendingPrompts() : Promise.resolve([]),
+    isDefaultView ? getCachedPopularCategories() : Promise.resolve([]),
   ]);
+  
+  const trendingPrompts = trendingPromptsRaw.length > 0 
+    ? JSON.parse(JSON.stringify(trendingPromptsRaw)) 
+    : [];
 
   // 2. Fetch Dynamic Data in Parallel
   // By not waiting for the count to finish before querying the prompts, we cut latency in half.
@@ -120,85 +177,90 @@ export default async function Home(props: {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <section className="hero-section bg-white py-5 border-bottom">
-        <div className="container py-4">
-          <div className="row justify-content-center text-center">
-            <div className="col-lg-10 col-xl-9">
-              <div className="hero-content mb-4">
-                <span className="badge bg-primary bg-opacity-10 text-primary px-4 py-2 mb-4 fs-6 rounded-pill">
-                  <i className="bi bi-stars me-2"></i> AI-Powered Creativity
-                </span>
-                <h1 className="display-2 fw-bold mb-4 text-dark">
-                  Create Stunning <span className="text-primary">AI Art</span>
-                </h1>
-                <p
-                  className="lead text-muted mb-5 fs-5 px-lg-5 mx-auto"
-                  style={{ maxWidth: "700px" }}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #f0f6ff 0%, #e8f0fe 50%, #f0f6ff 100%)',
+          borderBottom: '1px solid #cfe2ff',
+          padding: '3rem 0 2rem'
+        }}
+      >
+        <div className="container">
+          <div className="row align-items-center justify-content-between">
+            {/* Left: Text Content */}
+            <div className="col-lg-7 text-center text-lg-start">
+              {/* AI badge */}
+              <div className="mb-3 d-flex justify-content-center justify-content-lg-start">
+                <span
+                  className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill fw-semibold"
+                  style={{
+                    background: 'rgba(13,110,253,0.1)',
+                    color: '#0d6efd',
+                    fontSize: '0.8rem',
+                    border: '1px solid rgba(13,110,253,0.2)'
+                  }}
                 >
-                  Browse our curated collection of high-quality prompts. Copy,
-                  customize, and create amazing AI-generated images with just
-                  one click.
-                </p>
+                  <span style={{ width: 8, height: 8, background: '#0d6efd', borderRadius: '50%', display: 'inline-block', animation: 'pulse 2s infinite' }}></span>
+                  AI Prompt Gallery
+                </span>
               </div>
 
-              <div className="row justify-content-center g-3 mt-4">
-                <div className="col-lg-3 col-md-4 col-sm-4 col-6">
-                  <div className="card border-0 shadow-sm h-100">
-                    <div className="card-body text-center p-3">
-                      <div className="mb-2">
-                        <i
-                          className="bi bi-collection-fill text-primary"
-                          style={{ fontSize: "2rem" }}
-                        ></i>
-                      </div>
-                      <h3 className="h4 text-primary fw-bold mb-1">
-                        {totalPromptsCount}+
-                      </h3>
-                      <p className="text-muted mb-0 small fw-semibold">
-                        AI Prompts
-                      </p>
-                    </div>
+              <h1 className="fw-bold mb-3" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', lineHeight: 1.2, color: '#0a1929' }}>
+                Discover &amp; Copy<br />
+                <span className="text-primary">
+                  Perfect AI Prompts
+                </span>
+              </h1>
+
+              <p className="mb-4 mx-auto mx-lg-0" style={{ color: '#64748b', fontSize: '1rem', maxWidth: '480px', lineHeight: 1.7 }}>
+                Type a style. Pick a prompt. Generate stunning AI art — instantly. Browse our curated library for Midjourney, DALL·E & Stable Diffusion.
+              </p>
+
+              {/* Stats row */}
+              <div className="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
+                <div className="d-flex align-items-center gap-2">
+                  <div style={{ width: 36, height: 36, background: 'rgba(13,110,253,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-collection-fill text-primary" style={{ fontSize: '0.9rem' }}></i>
+                  </div>
+                  <div>
+                    <div className="fw-bold lh-1" style={{ color: '#0f172a', fontSize: '1rem' }}>{totalPromptsCount}+</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Prompts</div>
                   </div>
                 </div>
-                <div className="col-lg-3 col-md-4 col-sm-4 col-6">
-                  <div className="card border-0 shadow-sm h-100">
-                    <div className="card-body text-center p-3">
-                      <div className="mb-2">
-                        <i
-                          className="bi bi-grid-3x3-gap-fill text-primary"
-                          style={{ fontSize: "2rem" }}
-                        ></i>
-                      </div>
-                      <h3 className="h4 text-primary fw-bold mb-1">
-                        {categories.length}+
-                      </h3>
-                      <p className="text-muted mb-0 small fw-semibold">
-                        Categories
-                      </p>
-                    </div>
+                <div className="d-flex align-items-center gap-2">
+                  <div style={{ width: 36, height: 36, background: 'rgba(13,110,253,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-grid-3x3-gap-fill text-primary" style={{ fontSize: '0.9rem' }}></i>
+                  </div>
+                  <div>
+                    <div className="fw-bold lh-1" style={{ color: '#0f172a', fontSize: '1rem' }}>{categories.length}+</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Categories</div>
                   </div>
                 </div>
-                <div className="col-lg-3 col-md-4 col-sm-4 col-6">
-                  <div className="card border-0 shadow-sm h-100">
-                    <div className="card-body text-center p-3">
-                      <div className="mb-2">
-                        <i
-                          className="bi bi-gift-fill text-primary"
-                          style={{ fontSize: "2rem" }}
-                        ></i>
-                      </div>
-                      <h3 className="h4 text-primary fw-bold mb-1">100%</h3>
-                      <p className="text-muted mb-0 small fw-semibold">
-                        Free Forever
-                      </p>
-                    </div>
+                <div className="d-flex align-items-center gap-2">
+                  <div style={{ width: 36, height: 36, background: 'rgba(34,197,94,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-gift-fill" style={{ color: '#22c55e', fontSize: '0.9rem' }}></i>
+                  </div>
+                  <div>
+                    <div className="fw-bold lh-1" style={{ color: '#0f172a', fontSize: '1rem' }}>100%</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Free</div>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Right: Live animated prompt widget */}
+            <div className="col-lg-5 d-none d-lg-block">
+              <HeroAnimation />
+            </div>
           </div>
         </div>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}} />
       </section>
+
 
       <FilterSection
         categories={categories}
@@ -207,28 +269,80 @@ export default async function Home(props: {
         currentSort={sortBy}
       />
 
-      <div className="container mt-4 mb-3">
-        <div
-          className="alert alert-info d-flex align-items-center shadow-sm border-0 rounded-3"
-          role="alert"
-        >
-          <div className="alert-icon me-3">
-            <i className="bi bi-info-circle-fill fs-3"></i>
+      {isDefaultView && popularCategories.length > 0 && (
+        <section className="py-2 bg-light border-bottom">
+          <div className="container py-1">
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <i className="bi bi-star-fill text-warning" style={{ fontSize: '0.75rem' }}></i>
+              <span className="text-muted fw-semibold text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.8px' }}>Popular Categories</span>
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              {popularCategories.map((cat: any) => (
+                <Link key={cat.name} href={`/?category=${encodeURIComponent(cat.name)}`} className="text-decoration-none">
+                  <span className="badge px-2 py-1 rounded-pill border fw-medium" style={{ background: '#fff', color: '#334155', fontSize: '0.72rem', transition: 'all 0.2s' }}>
+                    {cat.name} <span className="text-muted ms-1" style={{ fontSize: '0.65rem' }}>{cat.count}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="flex-grow-1">
-            <h5 className="alert-heading mb-1 fw-bold">New to AI Prompts?</h5>
-            <p className="mb-0 small">
-              Learn how to use these prompts with your own photos on Midjourney,
-              DALL-E, and more!
-            </p>
+        </section>
+      )}
+
+      {isDefaultView && trendingPrompts.length > 0 && (
+        <section className="py-3 bg-white border-bottom">
+          <div className="container">
+            <div className="d-flex align-items-center mb-2">
+              <i className="bi bi-fire text-danger me-2" style={{ fontSize: '0.9rem' }}></i>
+              <span className="fw-bold text-dark" style={{ fontSize: '0.85rem' }}>Trending Prompts</span>
+            </div>
+            <div className="row g-2">
+              {trendingPrompts.map((p: any) => (
+                <div key={p._id} className="col-12 col-md-6 col-xl-4">
+                  <Link href={`/prompt/${p.slug}`} className="text-decoration-none">
+                    <div className="card shadow-sm border border-light border-opacity-50 bg-white rounded-3 overflow-hidden trending-card">
+                      <div className="d-flex align-items-center p-2" style={{ gap: 8 }}>
+                        <div className="flex-shrink-0 position-relative rounded-2 overflow-hidden bg-light border" style={{ width: "52px", height: "52px" }}>
+                          {p.image ? (
+                            <Image src={`/${p.image.replace(/^\//, '')}`} alt={p.title} fill sizes="52px" style={{ objectFit: 'cover' }} />
+                          ) : (
+                            <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i className="bi bi-image" style={{ fontSize: '0.9rem' }}></i></div>
+                          )}
+                        </div>
+                        <div className="flex-grow-1 overflow-hidden">
+                          <div className="text-dark fw-semibold text-truncate" style={{ fontSize: '0.78rem' }}>{p.title}</div>
+                          <div className="d-flex align-items-center gap-1 mt-1">
+                            <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill" style={{ fontSize: '0.62rem' }}>
+                              <i className="bi bi-fire me-1"></i>{p.stats?.views || 0}
+                            </span>
+                            <span className="badge bg-light text-secondary border rounded-pill text-truncate" style={{ fontSize: '0.62rem', maxWidth: 80 }}>
+                              {Array.isArray(p.category) ? p.category[0] : (p.category || 'General')}
+                            </span>
+                          </div>
+                        </div>
+                        <i className="bi bi-chevron-right text-muted opacity-50" style={{ fontSize: '0.7rem' }}></i>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <style dangerouslySetInnerHTML={{__html: `
+              .trending-card { transition: all 0.2s ease; }
+              .trending-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.06) !important; }
+            `}} />
           </div>
-          <Link
-            href="/instructions"
-            className="btn btn-primary btn-sm ms-3 flex-shrink-0"
-          >
-            <i className="bi bi-book me-1"></i>
-            <span className="d-none d-sm-inline">View Instructions</span>
-            <span className="d-inline d-sm-none">Learn</span>
+        </section>
+      )}
+
+      <div className="container mt-2 mb-2">
+        <div className="d-flex align-items-center gap-2 px-3 py-2 rounded-3 border" style={{ background: 'rgba(13,110,253,0.05)', borderColor: 'rgba(13,110,253,0.15) !important' }}>
+          <i className="bi bi-info-circle-fill text-primary" style={{ fontSize: '0.85rem', flexShrink: 0 }}></i>
+          <span className="text-muted" style={{ fontSize: '0.78rem', flexGrow: 1 }}>
+            <strong className="text-dark">New to AI Prompts?</strong> Learn how to use these with your photos on Midjourney, DALL-E &amp; more.
+          </span>
+          <Link href="/instructions" className="btn btn-primary btn-sm flex-shrink-0 py-1 px-2" style={{ fontSize: '0.72rem' }}>
+            <i className="bi bi-book me-1"></i>Guide
           </Link>
         </div>
       </div>
@@ -346,3 +460,4 @@ export default async function Home(props: {
     </>
   );
 }
+

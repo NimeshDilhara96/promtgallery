@@ -9,13 +9,12 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="navbar navbar-expand-lg bg-white fixed-top shadow-sm">
+    <nav className="navbar navbar-expand-lg bg-white sticky-top shadow-sm py-2">
       <div className="container">
-        <Link href="/" className="navbar-brand d-flex flex-column text-decoration-none">
-          <h1 className="h4 mb-0 fw-bold text-dark">
+        <Link href="/" className="navbar-brand d-flex align-items-center text-decoration-none">
+          <h1 className="h5 mb-0 fw-bold text-dark">
             <i className="bi bi-stars me-2 text-primary"></i>AI Prompt Gallery
           </h1>
-          <p className="small text-muted mb-0 d-none d-sm-block">Professional AI Art Prompts</p>
         </Link>
         
         <button
