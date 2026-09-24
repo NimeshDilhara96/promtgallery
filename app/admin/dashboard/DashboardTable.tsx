@@ -4,8 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { deletePrompt } from "./actions";
 
-export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
+export function DashboardTable({ 
+  initialPrompts,
+  currentPage = 1,
+  totalPages = 1
+}: { 
+  initialPrompts: any[];
+  currentPage?: number;
+  totalPages?: number;
+}) {
   const [prompts, setPrompts] = useState(initialPrompts);
+  
+  // Update prompts state when page changes and server passes new props
+  useEffect(() => {
+    setPrompts(initialPrompts);
+  }, [initialPrompts]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [promptToDelete, setPromptToDelete] = useState<{ id: string; title: string } | null>(null);
   const [now, setNow] = useState<number>(0);
@@ -180,6 +193,60 @@ export function DashboardTable({ initialPrompts }: { initialPrompts: any[] }) {
           </div>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4">
+          <span className="text-muted small mb-3 mb-md-0">
+            Showing Page {currentPage} of {totalPages}
+          </span>
+          <nav>
+            <ul className="pagination mb-0 shadow-sm">
+              <li className={`page-item ${currentPage <= 1 ? 'disabled' : ''}`}>
+                <Link href={`?page=${currentPage - 1}`} className="page-link">
+                  Previous
+                </Link>
+              </li>
+              
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const pageNum = i + 1;
+                
+                if (totalPages <= 5) {
+                  return (
+                    <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                      <Link href={`?page=${pageNum}`} className="page-link">{pageNum}</Link>
+                    </li>
+                  );
+                }
+                
+                if (
+                  pageNum === 1 || 
+                  pageNum === totalPages || 
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                      <Link href={`?page=${pageNum}`} className="page-link">{pageNum}</Link>
+                    </li>
+                  );
+                } else if (
+                  (pageNum === 2 && currentPage > 3) || 
+                  (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return <li key={pageNum} className="page-item disabled"><span className="page-link">...</span></li>;
+                }
+                return null;
+              })}
+              
+              <li className={`page-item ${currentPage >= totalPages ? 'disabled' : ''}`}>
+                <Link href={`?page=${currentPage + 1}`} className="page-link">
+                  Next
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
 
       {deleteModalOpen && (
         <div className="modal fade show" style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}>

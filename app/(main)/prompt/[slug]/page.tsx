@@ -4,11 +4,28 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { PromptDetailClient } from "./PromptDetailClient";
+import { cache } from "react";
+
+export const revalidate = 3600; // ISR: Revalidate pages every hour for SEO freshness
+
+// React cache deduplicates the DB call so generateMetadata and the Page only hit MongoDB once!
+const getPrompt = cache(async (slug: string) => {
+  await dbConnect();
+  return Prompt.findOne({ slug }).lean();
+});
+
+export async function generateStaticParams() {
+  await dbConnect();
+  // Pre-build the most popular/recent 100 prompts at build time for instant SEO
+  const prompts = await Prompt.find({}, { slug: 1 }).sort({ created_at: -1 }).limit(100).lean();
+  return prompts.map((p) => ({
+    slug: p.slug,
+  }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  await dbConnect();
   const { slug } = await params;
-  const prompt = await Prompt.findOne({ slug }).lean();
+  const prompt = await getPrompt(slug);
 
   if (!prompt) {
     return { title: "Not Found" };
@@ -37,9 +54,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function PromptPage({ params }: { params: Promise<{ slug: string }> }) {
-  await dbConnect();
   const { slug } = await params;
-  const prompt = await Prompt.findOne({ slug }).lean();
+  const prompt = await getPrompt(slug);
 
   if (!prompt) {
     notFound();

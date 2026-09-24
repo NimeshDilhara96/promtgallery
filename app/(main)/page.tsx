@@ -5,6 +5,31 @@ import { FilterSection } from "@/components/FilterSection";
 import { SortSelect } from "@/components/SortSelect";
 import { PromptCard } from "@/components/PromptCard";
 import AdBanner from "@/components/AdBanner";
+import { unstable_cache } from "next/cache";
+
+const getCachedCategories = unstable_cache(
+  async () => {
+    await dbConnect();
+    const allCategoriesRaw = await Prompt.distinct("category");
+    const categoriesSet = new Set<string>();
+    allCategoriesRaw.forEach((cat) => {
+      if (Array.isArray(cat)) cat.forEach((c) => categoriesSet.add(c));
+      else categoriesSet.add(cat);
+    });
+    return Array.from(categoriesSet).sort();
+  },
+  ["global-categories"],
+  { revalidate: 3600 } // Cache for 1 hour
+);
+
+const getCachedTotalPromptsCount = unstable_cache(
+  async () => {
+    await dbConnect();
+    return Prompt.countDocuments();
+  },
+  ["global-total-prompts"],
+  { revalidate: 3600 } // Cache for 1 hour
+);
 
 export default async function Home(props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -39,27 +64,39 @@ export default async function Home(props: {
     sortOptions = { "stats.copies": -1, created_at: -1 };
   }
 
-  // Fetch prompts
-  const totalPromptsCount = await Prompt.countDocuments();
-  const allCategoriesRaw = await Prompt.distinct("category");
-  // Categories could be array of strings or flat strings
-  const categoriesSet = new Set<string>();
-  allCategoriesRaw.forEach((cat) => {
-    if (Array.isArray(cat)) cat.forEach((c) => categoriesSet.add(c));
-    else categoriesSet.add(cat);
-  });
-  const categories = Array.from(categoriesSet).sort();
+  // 1. Fetch Global Cached Data (Zero DB hits if cached)
+  const [totalPromptsCount, categories] = await Promise.all([
+    getCachedTotalPromptsCount(),
+    getCachedCategories(),
+  ]);
 
-  const filteredCount = await Prompt.countDocuments(filter);
+  // 2. Fetch Dynamic Data in Parallel
+  // By not waiting for the count to finish before querying the prompts, we cut latency in half.
+  const rawPage = Math.max(1, page);
+  const offset = (rawPage - 1) * promptsPerPage;
+  
+  const [filteredCount, prompts] = await Promise.all([
+    Prompt.countDocuments(filter),
+    Prompt.find(filter, {
+      _id: 1,
+      title: 1,
+      slug: 1,
+      prompt: 1,
+      image: 1,
+      stats: 1,
+      platform: 1,
+      category: 1,
+      tags: 1,
+      created_at: 1
+    })
+      .sort(sortOptions)
+      .skip(offset)
+      .limit(promptsPerPage)
+      .lean()
+  ]);
+
   const totalPages = Math.ceil(filteredCount / promptsPerPage) || 1;
-  const currentPage = Math.min(Math.max(1, page), totalPages);
-  const offset = (currentPage - 1) * promptsPerPage;
-
-  const prompts = await Prompt.find(filter)
-    .sort(sortOptions)
-    .skip(offset)
-    .limit(promptsPerPage)
-    .lean();
+  const currentPage = Math.min(rawPage, totalPages);
 
   const jsonLd = {
     "@context": "https://schema.org",

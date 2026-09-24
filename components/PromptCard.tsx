@@ -3,9 +3,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 
 export function PromptCard({ prompt }: { prompt: any }) {
   const promptUrl = `/prompt/${prompt.slug}`;
+  const [imgError, setImgError] = useState(false);
 
   const promptCategories = Array.isArray(prompt.category)
     ? prompt.category
@@ -47,27 +49,22 @@ export function PromptCard({ prompt }: { prompt: any }) {
           justifyContent: "center",
         }}
       >
-        {imageSrc ? (
-          <img
+        {imageSrc && !imgError ? (
+          <Image
             src={imageSrc}
-            className="card-img-top w-100"
             alt={prompt.title}
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             style={{
-              maxHeight: "280px",
               objectFit: "contain",
               transition: "transform 0.4s ease",
             }}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              e.currentTarget.parentElement!.innerHTML +=
-                "<div class='d-flex align-items-center justify-content-center bg-light w-100' style='min-height: 200px;'><i class='bi bi-image text-muted' style='font-size: 3rem;'></i></div>";
-            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div
-            className="d-flex align-items-center justify-content-center bg-light w-100"
-            style={{ minHeight: "200px" }}
+            className="d-flex align-items-center justify-content-center bg-light w-100 h-100 position-absolute top-0 start-0"
+            style={{ minHeight: "200px", zIndex: 1 }}
           >
             <i className="bi bi-image text-muted" style={{ fontSize: "3rem" }}></i>
           </div>

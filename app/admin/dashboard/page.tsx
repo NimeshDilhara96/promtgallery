@@ -2,10 +2,34 @@ import dbConnect from "@/lib/db";
 import { Prompt } from "@/lib/models";
 import { DashboardTable } from "./DashboardTable";
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: any) {
+  const searchParams = await props.searchParams;
+  const page = parseInt(searchParams?.page as string) || 1;
+  const limit = 10;
+  const skip = (page - 1) * limit;
+
   await dbConnect();
   
-  const prompts = await Prompt.find().sort({ created_at: -1 }).lean();
+  // 1. PROJECTION & PAGINATION: Fetch only the fields needed and use skip/limit
+  const prompts = await Prompt.find({}, {
+    _id: 1,
+    title: 1,
+    prompt: 1,
+    image: 1,
+    category: 1,
+    platform: 1,
+    slug: 1,
+    stats: 1,
+    created_at: 1
+  })
+    .sort({ created_at: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+  
+  // 2. FAST COUNT: Use DB to count, much faster than array length
+  const totalPrompts = await Prompt.countDocuments();
+  const totalPages = Math.ceil(totalPrompts / limit);
   
   const allCategoriesRaw = await Prompt.distinct("category");
   const categoriesSet = new Set<string>();
@@ -15,14 +39,18 @@ export default async function DashboardPage() {
   });
   const totalCategories = categoriesSet.size;
   
-  const totalPrompts = prompts.length;
-  let totalViews = 0;
-  let totalCopies = 0;
-  
-  prompts.forEach((p: any) => {
-    totalViews += p.stats?.views || 0;
-    totalCopies += p.stats?.copies || 0;
-  });
+  // 3. AGGREGATION: Let MongoDB calculate totals instead of a Javascript loop
+  const statsAggregation = await Prompt.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalViews: { $sum: "$stats.views" },
+        totalCopies: { $sum: "$stats.copies" }
+      }
+    }
+  ]);
+  const totalViews = statsAggregation[0]?.totalViews || 0;
+  const totalCopies = statsAggregation[0]?.totalCopies || 0;
 
   return (
     <div className="container-fluid py-4">
@@ -88,7 +116,11 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-      <DashboardTable initialPrompts={JSON.parse(JSON.stringify(prompts))} />
+      <DashboardTable 
+        initialPrompts={JSON.parse(JSON.stringify(prompts))} 
+        currentPage={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

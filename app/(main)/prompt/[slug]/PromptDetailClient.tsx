@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { PromptCard } from "@/components/PromptCard";
 import AdBanner from "@/components/AdBanner";
 
@@ -162,16 +163,19 @@ export function PromptDetailClient({
                     }}
                     onClick={() => setShowModal(true)}
                   >
-                    <img
+                    <Image
                       src={imageSrc}
                       alt={prompt.title}
-                      loading="eager"
+                      priority={true} // Tells Next.js this is the LCP image to preload it instantly
+                      width={1200}
+                      height={800}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
                       style={{
                         width: "100%",
                         height: "auto",
                         maxHeight: "600px",
                         display: "block",
-                        objectFit: "cover",
+                        objectFit: "contain",
                       }}
                     />
                   </div>
@@ -477,11 +481,20 @@ export function PromptDetailClient({
                   }}
                   style={{ zIndex: 10 }}
                 ></button>
-                <img
+                <Image
                   src={imageSrc}
                   className="img-fluid rounded"
                   alt="Full size"
-                  style={{ maxHeight: "90vh", cursor: "zoom-out" }}
+                  width={1920}
+                  height={1080}
+                  style={{ 
+                    width: 'auto', 
+                    height: 'auto', 
+                    maxWidth: '100%', 
+                    maxHeight: "90vh", 
+                    cursor: "zoom-out",
+                    objectFit: "contain"
+                  }}
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
