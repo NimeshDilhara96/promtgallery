@@ -347,7 +347,7 @@ export default async function Home(props: {
         </div>
       </div>
 
-      <section className="py-5 bg-light">
+      <section id="prompts-list" className="py-5 bg-light">
         <div className="container">
           <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <h2 className="h3 mb-0">
@@ -408,8 +408,8 @@ export default async function Home(props: {
               <ul className="pagination justify-content-center">
                 <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                   <Link
-                    href={`/?page=${currentPage - 1}&category=${category}&search=${search}&sort=${sortBy}`}
-                    scroll={false}
+                    href={`/?page=${currentPage - 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
+                    scroll={true}
                     className="page-link"
                   >
                     Previous
@@ -421,8 +421,8 @@ export default async function Home(props: {
                     className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
                   >
                     <Link
-                      href={`/?page=${i + 1}&category=${category}&search=${search}&sort=${sortBy}`}
-                      scroll={false}
+                      href={`/?page=${i + 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
+                      scroll={true}
                       className="page-link"
                     >
                       {i + 1}
@@ -433,8 +433,8 @@ export default async function Home(props: {
                   className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
                 >
                   <Link
-                    href={`/?page=${currentPage + 1}&category=${category}&search=${search}&sort=${sortBy}`}
-                    scroll={false}
+                    href={`/?page=${currentPage + 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
+                    scroll={true}
                     className="page-link"
                   >
                     Next
