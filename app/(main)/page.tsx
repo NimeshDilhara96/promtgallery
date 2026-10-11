@@ -8,6 +8,7 @@ import { PromptCard } from "@/components/PromptCard";
 import AdBanner from "@/components/AdBanner";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
+import { Metadata } from "next";
 import HeroAnimation from "@/components/HeroAnimation";
 
 const getCachedCategories = unstable_cache(
@@ -75,6 +76,71 @@ const getCachedPopularCategories = unstable_cache(
   { revalidate: 3600 }
 );
 
+export async function generateMetadata(props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const rawCategory = searchParams.category;
+  const search = searchParams.search?.trim();
+  const rawPage = parseInt(searchParams.page || "1");
+  const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+
+  const categories = await getCachedCategories();
+
+  // Normalize category casing to match DB category if present
+  let normalizedCategory: string | null = null;
+  if (rawCategory && rawCategory.toLowerCase() !== "all") {
+    const matched = categories.find(
+      (c) => c.toLowerCase() === rawCategory.toLowerCase()
+    );
+    normalizedCategory = matched || rawCategory;
+  }
+
+  // Canonical URL construction:
+  // - Strips sort parameter (sorting options should not create duplicate indexable pages)
+  // - When searching: marked as noindex to avoid duplicate internal search results
+  // - Category pages have their own canonical URL: /?category=CategoryName
+  // - Pagination (page > 1) is preserved in canonical
+  // - Page 1 points to canonical root without page param
+  let canonicalPath = "/";
+  if (normalizedCategory) {
+    canonicalPath = `/?category=${encodeURIComponent(normalizedCategory)}`;
+    if (page > 1) {
+      canonicalPath += `&page=${page}`;
+    }
+  } else if (page > 1) {
+    canonicalPath = `/?page=${page}`;
+  }
+
+  const isSearch = Boolean(search);
+
+  let title = "AI Prompts Gallery - ChatGPT, Gemini, Midjourney & More";
+  let description =
+    "Discover, copy, and explore powerful AI prompts for ChatGPT, Gemini, Midjourney, Claude, and more. Find prompts for writing, coding, image generation, marketing, productivity, and creativity.";
+
+  if (normalizedCategory) {
+    title = `${normalizedCategory} AI Prompts | AI Prompt Gallery`;
+    description = `Explore high-quality ${normalizedCategory} AI prompts for Midjourney, ChatGPT, DALL-E, and Stable Diffusion. Copy and customize instantly.`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    robots: isSearch
+      ? {
+          index: false,
+          follow: true,
+        }
+      : {
+          index: true,
+          follow: true,
+        },
+  };
+}
+
 export default async function Home(props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
@@ -90,7 +156,9 @@ export default async function Home(props: {
   // Build filter
   const filter: any = {};
   if (category !== "all") {
-    filter.category = category;
+    filter.category = {
+      $regex: new RegExp(`^${category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+    };
   }
   if (search) {
     const words = search.trim().split(/\s+/).filter(w => w.length > 0);
@@ -113,7 +181,7 @@ export default async function Home(props: {
     sortOptions = { "stats.copies": -1, created_at: -1 };
   }
 
-  const isDefaultView = category === "all" && !search && page === 1;
+  const isDefaultView = (category === "all" || !category) && !search && page <= 1;
 
   // 1. Fetch Global Cached Data (Zero DB hits if cached)
   const [totalPromptsCount, categories, trendingPromptsRaw, popularCategories] = await Promise.all([
@@ -403,46 +471,82 @@ export default async function Home(props: {
             <AdBanner label="Sponsored" />
           </div>
 
-          {totalPages > 1 && (
-            <nav className="mt-5" aria-label="Prompt pagination">
-              <ul className="pagination justify-content-center">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <Link
-                    href={`/?page=${currentPage - 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
-                    scroll={true}
-                    className="page-link"
-                  >
-                    Previous
-                  </Link>
-                </li>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <li
-                    key={i}
-                    className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-                  >
-                    <Link
-                      href={`/?page=${i + 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
-                      scroll={true}
-                      className="page-link"
-                    >
-                      {i + 1}
-                    </Link>
+          {totalPages > 1 && (() => {
+            const buildPageUrl = (targetPage: number) => {
+              const params = new URLSearchParams();
+              if (category && category !== "all") {
+                params.set("category", category);
+              }
+              if (search) {
+                params.set("search", search);
+              }
+              if (sortBy && sortBy !== "latest") {
+                params.set("sort", sortBy);
+              }
+              if (targetPage > 1) {
+                params.set("page", targetPage.toString());
+              }
+              const queryString = params.toString();
+              return (queryString ? `/?${queryString}` : "/") + "#prompts-list";
+            };
+
+            return (
+              <nav className="mt-5" aria-label="Prompt pagination">
+                <ul className="pagination justify-content-center">
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    {currentPage === 1 ? (
+                      <span className="page-link" aria-disabled="true">
+                        Previous
+                      </span>
+                    ) : (
+                      <Link
+                        href={buildPageUrl(currentPage - 1)}
+                        scroll={true}
+                        className="page-link"
+                      >
+                        Previous
+                      </Link>
+                    )}
                   </li>
-                ))}
-                <li
-                  className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
-                >
-                  <Link
-                    href={`/?page=${currentPage + 1}&category=${category}&search=${search}&sort=${sortBy}#prompts-list`}
-                    scroll={true}
-                    className="page-link"
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <li
+                        key={i}
+                        className={`page-item ${currentPage === pageNum ? "active" : ""}`}
+                      >
+                        <Link
+                          href={buildPageUrl(pageNum)}
+                          scroll={true}
+                          className="page-link"
+                          aria-current={currentPage === pageNum ? "page" : undefined}
+                        >
+                          {pageNum}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  <li
+                    className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
                   >
-                    Next
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          )}
+                    {currentPage === totalPages ? (
+                      <span className="page-link" aria-disabled="true">
+                        Next
+                      </span>
+                    ) : (
+                      <Link
+                        href={buildPageUrl(currentPage + 1)}
+                        scroll={true}
+                        className="page-link"
+                      >
+                        Next
+                      </Link>
+                    )}
+                  </li>
+                </ul>
+              </nav>
+            );
+          })()}
         </div>
       </section>
 

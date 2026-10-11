@@ -4,6 +4,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About | AI Prompt Gallery",
   description: "Learn more about our mission to help creators make stunning AI art.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 export default function AboutPage() {

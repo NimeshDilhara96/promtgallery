@@ -6,7 +6,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseURL = process.env.NEXT_PUBLIC_SITE_URL || "https://aiprompts.mommentx.space";
   
   await dbConnect();
-  const prompts = await Prompt.find({}, { slug: 1, updated_at: 1, created_at: 1 }).lean();
+  const [prompts, allCategoriesRaw] = await Promise.all([
+    Prompt.find({}, { slug: 1, updated_at: 1, created_at: 1 }).lean(),
+    Prompt.distinct("category"),
+  ]);
+
+  const categoriesSet = new Set<string>();
+  allCategoriesRaw.forEach((cat) => {
+    if (Array.isArray(cat)) cat.forEach((c) => { if (c) categoriesSet.add(c); });
+    else if (cat) categoriesSet.add(cat);
+  });
+
+  const categoryUrls = Array.from(categoriesSet).map((categoryName) => ({
+    url: `${baseURL}/?category=${encodeURIComponent(categoryName)}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }));
   
   const promptUrls = prompts.map((prompt: any) => ({
     url: `${baseURL}/prompt/${prompt.slug}`,
@@ -50,6 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...categoryUrls,
     ...promptUrls,
   ];
 }

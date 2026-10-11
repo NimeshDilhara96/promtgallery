@@ -7,6 +7,9 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aiprompts.mommentx.
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "AI Prompts Gallery - ChatGPT, Gemini, Midjourney & More",
     template: "%s | AI Prompt Gallery",

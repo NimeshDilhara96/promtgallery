@@ -67,11 +67,18 @@ export function FilterSection({
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, currentCategory, currentSort, currentSearch, router]);
 
+  function buildFilterUrl(cat: string, searchVal: string, sortVal: string) {
+    const params = new URLSearchParams();
+    if (cat && cat !== "all") params.set("category", cat);
+    if (searchVal && searchVal.trim()) params.set("search", searchVal.trim());
+    if (sortVal && sortVal !== "latest") params.set("sort", sortVal);
+    const q = params.toString();
+    return q ? `/?${q}` : "/";
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    let url = `/?category=${currentCategory}&sort=${currentSort}`;
-    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
-    router.push(url, { scroll: false });
+    router.push(buildFilterUrl(currentCategory, searchTerm, currentSort), { scroll: false });
     setShowDropdown(false);
   }
 
@@ -161,9 +168,7 @@ export function FilterSection({
               </h5>
               <div className="d-flex flex-wrap justify-content-center gap-2">
                 <Link
-                  href={`/?category=all${
-                    currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : ""
-                  }&sort=${currentSort}`}
+                  href={buildFilterUrl("all", currentSearch, currentSort)}
                   scroll={false}
                   className={`btn btn-sm rounded-pill ${
                     currentCategory === "all" ? "btn-primary active" : "btn-outline-primary"
@@ -175,9 +180,7 @@ export function FilterSection({
                   categories.map((cat) => (
                     <Link
                       key={cat}
-                      href={`/?category=${encodeURIComponent(cat)}${
-                        currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : ""
-                      }&sort=${currentSort}`}
+                      href={buildFilterUrl(cat, currentSearch, currentSort)}
                       scroll={false}
                       className={`btn btn-sm rounded-pill ${
                         currentCategory === cat ? "btn-primary active" : "btn-outline-primary"

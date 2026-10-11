@@ -2,6 +2,14 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Link from "next/link";
 import { getSession, logout } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AdminLayout({
   children,

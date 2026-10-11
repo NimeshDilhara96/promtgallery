@@ -21,9 +21,13 @@ export function SortSelect({
       className="form-select form-select-sm d-inline-block w-auto"
       defaultValue={currentSort}
       onChange={(e) => {
-        let url = `/?category=${currentCategory}&sort=${e.target.value}`;
-        if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
-        router.push(url, { scroll: false });
+        const newSort = e.target.value;
+        const params = new URLSearchParams();
+        if (currentCategory && currentCategory !== "all") params.set("category", currentCategory);
+        if (currentSearch && currentSearch.trim()) params.set("search", currentSearch.trim());
+        if (newSort !== "latest") params.set("sort", newSort);
+        const query = params.toString();
+        router.push(query ? `/?${query}` : "/", { scroll: false });
       }}
     >
       <option value="latest">Latest First</option>

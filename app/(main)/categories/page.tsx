@@ -6,6 +6,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Categories | AI Prompt Gallery",
   description: "Browse AI art prompts organized by category: Portraits, Landscapes, 3D Art, Anime, and more.",
+  alternates: {
+    canonical: "/categories",
+  },
 };
 
 const categoryIcons: Record<string, string> = {

@@ -4,6 +4,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "How to Use AI Prompts | AI Prompt Gallery",
   description: "A comprehensive guide to getting the best results from your AI art generators using our curated prompts.",
+  alternates: {
+    canonical: "/instructions",
+  },
 };
 
 export default function InstructionsPage() {
